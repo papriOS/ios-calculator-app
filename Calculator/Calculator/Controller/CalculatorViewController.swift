@@ -18,6 +18,7 @@ final class CalculatorViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        init_Operator_Operand()
         // Do any additional setup after loading the view.
     }
 
@@ -29,14 +30,34 @@ final class CalculatorViewController: UIViewController {
         updateOperandValue(input: number) // operandLabel가 업데이트 된다
     }
     
-    @IBAction func pressDecimalPoint(_ sender: UIButton) {
-        // 이미 operandLabel에 . 이 있는지 없는지 확인
-            // 있다면 아무것도 안함. 그냥 return
-            // 없다면 operandLabel 뒤에 무조건 붙임
+    @IBAction func pressDoubleZero(_ sender: UIButton) {
+        guard let operand = operandLabel.text, let doubleZero = sender.titleLabel?.text else{
+            return
+        }
+        
+        if operand == "0" {
+            return
+        } else {
+            operandLabel.text = operand + doubleZero
+        }
+        
     }
     
+    @IBAction func pressDecimalPoint(_ sender: UIButton) {
+        
+        guard let operand = operandLabel.text, let number = sender.titleLabel?.text else{
+            return
+        }
+        
+        if operand.contains(".") {
+            return
+        } else {
+            operandLabel.text = operand + number
+        }
+        
+    }
     
-    @IBAction func pressCalculate(_ sender: UIButton) {
+    @IBAction func pressEqualSign(_ sender: UIButton) {
         // = 버튼을 누르면
         
         updateInputStackView() // operatorLabel, operandLabel 에 있던 내용이 inputStackView에 추가된다
@@ -76,24 +97,33 @@ final class CalculatorViewController: UIViewController {
     // private method
     
     private func init_Operator_Operand() {
-        // operatorLabel 는 빈칸으로, operandLabel 는 0으로 둠
+        operatorLabel.text = ""
+        operandLabel.text = "0"
     }
     
     private func updateOperandValue(input: String) {
-        // 숫자 버튼 누른거의 String값이 매개변수로 들어옴
-        // 들어온게 숫자다
-            // operandLabel이 "0" 이면
-            // operandLabel = String값 //뒤에 붙는게 아니고 걍 바뀌어야함
-                // 근데 "00"이 들어오면 바뀌지 않음
+        guard let operand = operandLabel.text else {
+            return
+        }
         
-            // operandLabel이 "0"이 아니면
-            // operandLabel += String값 // 들어오는 값이 뒤에 졸졸 붙어야함
-        
+        if operandLabel.text == "0" {
+            operandLabel.text = input
+        } else {
+            operandLabel.text = operand + input
+        }
     }
     
     private func updateOperandSign() {
-        // 부호바꾸기 버튼 누르면 operandLabel 앞에 -를 붙이거나 뗀다
-        // operandLabel의 값을 Double로 바꾸고 부호로 바꾸면 안됨. 3 -> -3.0이 됨
+        guard var operand = operandLabel.text, operandLabel.text != "0" else {
+            return
+        }
+        
+        if operand.contains("-") {
+            operand.removeFirst()
+        } else {
+            operand.insert("-", at: operand.startIndex)
+        }
+        operandLabel.text = operand
     }
     
     private func updateOperator() {
