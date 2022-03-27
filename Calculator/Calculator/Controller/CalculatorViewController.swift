@@ -1,33 +1,25 @@
-//
-//  Calculator - ViewController.swift
-//  Created by yagom. 
-//  Copyright © yagom. All rights reserved.
-// 
 
 import UIKit
 
 final class CalculatorViewController: UIViewController {
 
-    @IBOutlet weak var inputScrollView: UIScrollView!
-    @IBOutlet weak var inputStackView: UIStackView!
+    @IBOutlet weak var historyScrollView: UIScrollView!
+    @IBOutlet weak var historyStackView: UIStackView!
     @IBOutlet weak var operatorLabel: UILabel!
     @IBOutlet weak var operandLabel: UILabel!
     
-    private var inputCollection: [String] = [] // Scroll View의 VerticalStackView에 들어간 모든 HorizontalStackView의 Label들(operator, operand)을 합친 String의 모음집
-    
+    private var recordCollection: [String] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        init_Operator_Operand()
-        // Do any additional setup after loading the view.
+        allClear()
     }
 
     @IBAction func pressNumber(_ sender: UIButton) {
-        // 숫자를 결정짓는 버튼들을 누르면
         guard let number = sender.titleLabel?.text else {
             return
         }
-        updateOperandValue(input: number) // operandLabel가 업데이트 된다
+        updateOperandValue(input: number)
     }
     
     @IBAction func pressDoubleZero(_ sender: UIButton) {
@@ -40,11 +32,9 @@ final class CalculatorViewController: UIViewController {
         } else {
             operandLabel.text = operand + doubleZero
         }
-        
     }
     
     @IBAction func pressDecimalPoint(_ sender: UIButton) {
-        
         guard let operand = operandLabel.text, let number = sender.titleLabel?.text else{
             return
         }
@@ -54,44 +44,36 @@ final class CalculatorViewController: UIViewController {
         } else {
             operandLabel.text = operand + number
         }
-        
     }
     
-    @IBAction func pressEqualSign(_ sender: UIButton) {
-        // = 버튼을 누르면
-        
-        updateInputStackView() // operatorLabel, operandLabel 에 있던 내용이 inputStackView에 추가된다
-        showCalculationResult() // operandLabel에 계산 결과값이 나온다
+    @IBAction func pressEqualSign(_ sender: UIButton) { // 이미 연산결과가 나왔는데 = 을 누르면 아무것도 진행 안됨.
+        updateHistoryStackView() // operatorLabel, operandLabel 에 있던 내용이 inputStackView에 추가된다
+        operandLabel.text = formatNumber(input: String(calculateRecordCollection()))// operandLabel에 계산 결과값이 나온다. 근데 결과값이 Double.. 정제되지 않은 상태로 나옴;;
+        // calculateRecordCollection() 가 format 되게 끔 하고 String 변환하면 될듯~
+        recordCollection = []
     }
     
     @IBAction func pressOperator(_ sender: UIButton) {
-        // 연산자 버튼을 누르면
-        
-        updateInputStackView() // 기존 operatorLabel, operandLabel 내용이 inputStackView로 들어간다
-        updateOperator() // operatorLabel이 누른 연산자로 바뀐다
+        guard let operatorString = sender.titleLabel?.text else {
+            return
+        }
+        if operandLabel.text != "0" { // 아무 입력이 없는 상태면??
+            updateHistoryStackView() // 기존 operatorLabel, operandLabel 내용이 inputStackView로 들어간다
+        }
+        updateOperator(input: operatorString) // operatorLabel이 누른 연산자로 바뀐다
     }
     
     @IBAction func pressAllClear(_ sender: UIButton) {
-        // AC 버튼을 누르면
-        
-        allClear() // inputStackView 가 모두 비워진다
-       
-       
+        allClear()
     }
     
     @IBAction func pressClearEntry(_ sender: UIButton) {
-        // CE 버튼을 누르면
-        
         clearEntry()
-       
     }
     
-    @IBAction func pressChangeNumerSign(_ sender: UIButton) {
+    @IBAction func pressChangeNumberSign(_ sender: UIButton) {
         updateOperandSign()
     }
-    
-    
-    
     
     
     // private method
@@ -126,54 +108,83 @@ final class CalculatorViewController: UIViewController {
         operandLabel.text = operand
     }
     
-    private func updateOperator() {
-        // 연산자 버튼 누른걸로 operandLabel 업데이트하기
+    private func updateOperator(input: String) {
+        operatorLabel.text = input
     }
     
-    private func updateInputStackView() {
-        init_Operator_Operand() // operatorLabel, operandLabel 다 초기화된다
-        makeInputStackSubView()
-        //inputStackView.addArangedSubView(만든 스택 뷰)
+    private func updateHistoryStackView() {
+        let recordStackView = makeRecordStackView()
+        historyStackView.addArrangedSubview(recordStackView)
+        historyScrollView.setContentOffset(CGPoint(x: 0, y: historyScrollView.contentSize.height - historyScrollView.bounds.height), animated: true)
+        init_Operator_Operand()
+        // operatorLabel, operandLabel 다 초기화된다
     }
     
-    private func makeInputStackSubView() {
-        formatOperand()
+    private func makeRecordStackView() -> UIStackView {
+        let recordStackView = UIStackView()
+        recordStackView.axis = .horizontal
+        recordStackView.spacing = 8.0
+        recordStackView.alignment = .fill
+        recordStackView.distribution = .fill
+        
+        let validOperand = formatNumber(input: operandLabel.text)
+        let validOperator = operatorLabel.text ?? ""
+        
+        let validOperandLabel = UILabel()
+        validOperandLabel.text = validOperand
+        validOperandLabel.textColor = .white
+        
+        let validOperatorLabel = UILabel()
+        validOperatorLabel.text = validOperator
+        validOperatorLabel.textColor = .white
         // operandLabel, operatroLabel 내용이 horizontalStackView로 생성
-        updateInputCollection()
-    }
-    
-    private func formatOperand() {
-        // operandLabel에 .이 있다면
-            // operandLabel이 . 으로 끝나면, .을 없애준다.
-            // operandLabel의 마지막이 0이 아닐때까지 0을 없애준다.
-            // 3칸마다 , 찍어준다.
-    }
-    
-    private func updateInputCollection() {
-        // operandLabel, operatorLabel 내용이 공백을 간격으로 합쳐진 String을 만들고 inputCollection에 append함
-    }
-    
-    private func showCalculationResult() {
-        init_Operator_Operand() // operatorLabel, operandLabel 다 초기화된다
         
-        // inputCollection에 있는 String들 다 " " 구분점으로 합쳐서 하나의 String으로 변환
-        // String에 있는 나누기,곱하기 기호를 각각 /랑 *로 대체
-        // String에 있는 , 다 없앰
-        /*
-         var formula = ExpressionParser.parse(from: input)
-         let result = formula.result()
-         */
+        [validOperatorLabel, validOperandLabel].forEach { recordStackView.addArrangedSubview($0) }
+        updateInputCollection(validOperator: validOperator, validOperand: validOperand)
         
-        // operandLabel이 result로 바뀜
+        return recordStackView
+    }
+    
+    private func formatNumber(input: String?) -> String {
+        var formattedNumber = input ?? "0"
+        
+        if formattedNumber.contains(".") {
+            while formattedNumber.last == "0" {
+                formattedNumber.removeLast()
+            }
+        }
+        
+        if formattedNumber.last == "." {
+            formattedNumber.removeLast()
+        }
+        
+        return formattedNumber
+    }
+    
+    private func updateInputCollection(validOperator: String, validOperand: String) {
+        let inputString = validOperator + " " + validOperand
+        recordCollection.append(inputString)
+    }
+    
+    private func calculateRecordCollection() -> Double {
+        let validRecordString = recordCollection.reduce( "" , { $0 + " " + $1 } )
+                                .replacingOccurrences(of: "÷", with: "/")
+                                .replacingOccurrences(of: "×", with: "*")
+                                .replacingOccurrences(of: ",", with: "")
+        var formula = ExpressionParser.parse(from: validRecordString)
+        let result = formula.result()
+        
+        return result
     }
     
     private func allClear() {
         init_Operator_Operand()  // operatorLabel은 비고, operandLabel에 0이 들어간다
-        // inputStackView 가 모두 비워진다
+        historyStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        recordCollection = []
     }
     
     private func clearEntry() {
-        // operatorLabel은 그대로, operandLabel에 0이 들어간다
+        operandLabel.text = "0"
     }
 }
 

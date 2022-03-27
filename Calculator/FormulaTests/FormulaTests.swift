@@ -57,5 +57,4 @@ class FormulaTests: XCTestCase {
         //then
         XCTAssertTrue(result.isNaN)
     }
-
 }
